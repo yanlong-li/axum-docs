@@ -1,0 +1,77 @@
+---
+title: 中间件
+---
+
+通过中间件可以进行一些通用的处理，例如身份验证、日志记录、限流、缓存、数据验证、数据转换、数据格式化、数据加密等。
+
+
+
+```rust
+Router::new().route_layer(middleware::from_fn(mw_require_auth))
+
+
+pub async fn mw_require_auth(
+    mut req: Request,
+    next: Next,
+) -> Result<Response> {
+    return Err(StatusCode::INTERNAL_SERVER_ERROR);
+
+    Ok(next.run(req).await)
+}
+```
+
+
+## 完整案例
+
+以下例子中，我们使用 `middleware::from_fn` 来创建一个中间件，它会检查 `Query` 是否存在 `name` 属性，如果不存在则返回错误。
+
+您可以将其替换为检查 Cookie、Session、Header 等进行身份验证，或无任务条件检查，仅是打印日志等。
+
+```rust
+use std::net::SocketAddr;
+
+use axum::{middleware, Router};
+use axum::extract::{Query, Request};
+use axum::middleware::Next;
+use axum::response::Response;
+use axum::routing::get;
+use serde::Deserialize;
+
+#[tokio::main]
+async fn main() {
+
+    // 构建项目处理器
+    let app = Router::new().route("/", get(test)).route_layer(middleware::from_fn(mw_require_auth));
+
+    // 监听端口
+    let listener = tokio::net::TcpListener::bind("localhost:8000").await.unwrap();
+    // 运行项目
+    axum::serve::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
+}
+
+async fn test() -> &'static str {
+    "Ok"
+}
+
+#[derive(Deserialize)]
+struct Test {
+    name: Option<String>,
+}
+
+pub async fn mw_require_auth(
+    Query(test): Query<Test>,
+    req: Request,
+    next: Next,
+) -> Result<Response, String> {
+    if (test.name.is_none()) {
+        return Err("name is none".to_string());
+    }
+
+    Ok(next.run(req).await)
+}
+```
+
+
+* 注意，请求中的参数、状态等一定要放置于 Request、Next 之前定义，否则无法通过编译器检查。
