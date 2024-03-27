@@ -5,7 +5,7 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
     base: "/axum-docs",
     redirects: {
-        '/': '/zh-cn',
+        '/': '/axum-docs/zh-cn',
     },
     integrations: [
         starlight({
