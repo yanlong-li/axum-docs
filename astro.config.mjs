@@ -1,11 +1,12 @@
 import {defineConfig} from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightLinksValidator from '@astrojs/starlight'
 
 // https://astro.build/config
 export default defineConfig({
-    base: "/axum-docs",
+    base: "/",
     redirects: {
-        '/': '/axum-docs/zh-cn',
+        '/': '/zh-cn',
     },
     integrations: [
         starlight({
@@ -97,9 +98,7 @@ export default defineConfig({
             defaultLocale: 'zh-cn',
             locales: {
                 // English docs in `src/content/docs/en/`
-                en: {
-                    label: 'English',
-                },
+
                 // Simplified Chinese docs in `src/content/docs/zh-cn/`
                 'zh-cn': {
                     label: '简体中文',
@@ -108,8 +107,19 @@ export default defineConfig({
                 'zh-tw': {
                     label: '正體中文',
                     lang: 'zh-TW',
-                }
+                },
+                en: {
+                    label: 'English',
+                },
             },
+            plugins: process.env.CHECK_LINKS
+                ? [
+                    starlightLinksValidator({
+                        errorOnFallbackPages: false,
+                        errorOnInconsistentLocale: true,
+                    }),
+                ]
+                : [],
         }),
     ],
 });
