@@ -1,0 +1,57 @@
+---
+title: 路由引导
+description: 应用处理器及路由关联
+---
+import {Code} from "astro/components";
+
+路由将通过访问目标的 `请求路径` 及 `请求方式` 关联到具体的处理函数。如下面的请求：
+
+```http request
+GET http://localhost:3000/hello
+```
+
+* GET 是`请求方式`
+* /hello 是`请求路径`
+
+
+<h2>路由定义</h2>
+
+在代码中引入 `axum::Router` 和 `axum::routing::get`，可以每行一个，也可以像下面代码中统一引入。
+
+<p>这里我们定义了两个处理器，一个通过匿名函数实现，一个通过具名函数实现。</p>
+<p>现在你可以在浏览器中访问 `http://localhost:3000/` 和 `http://localhost:3000/hello` 体验</p>
+
+```rust
+use axum::{
+    Router,
+    routing::{
+        get,
+        post,
+        delete,
+        patch,
+        put,
+    }
+};
+
+let app = Router::new().route("/", get(|| async { "Hello, World!" }))
+.route("/hello",get(hello));
+
+async fn hello() -> &'static str {
+  "Hello, World! 2"
+}
+```
+
+* 注意，这里是演示代码，实际运行请将代码补充完整。
+
+<h3>请求方式</h3>
+HTTP的请求方式有多种选择，以 RESTful 规范为例有如下几种:
+
+* GET
+* POST
+* DELETE
+* PUT
+* PATCH
+
+根据实际选择，甚至有些项目直接使用 `POST` 梭哈，虽然不推荐这么干。
+
+只有请求方式与定义方式一致是才能正确处理请求。例如：定义为 `post(|| async { "Hello, World!" })` 时，不能通过 GET 访问。

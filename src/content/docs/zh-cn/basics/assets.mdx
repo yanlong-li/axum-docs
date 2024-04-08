@@ -1,0 +1,63 @@
+---
+title: 前端资源
+---
+
+有时需要返回前端静态资源，如css、js、图片等。
+
+## 引入扩展
+首先需要引入 tower-http 的资源模块。
+
+```shell
+cargo add tower-http  -F tower-http/fs
+```
+
+## 准备静态资源
+
+
+在项目根目录创建一个`web`目录，将静态资源放入该目录中。例如 `test.css`
+
+```css
+#app {
+color: red;
+}
+```
+
+## 定义静态资源路由及目录
+此处将静态资源前缀定义为 `/static`,并配置静态资源目录为 `web`
+
+
+```rust
+Router::new()
+.nest_service("/static", get_service(ServeDir::new("web")));
+```
+
+## 参考案例
+```rs
+use std::net::SocketAddr;
+
+use axum::Router;
+use axum::routing::get_service;
+use tower_http::services::ServeDir;
+
+#[tokio::main]
+async fn main() {
+
+    // 构建项目处理器
+    let app = Router::new()
+        .nest_service("/static", get_service(ServeDir::new("web").append_index_html_on_directories(true)))
+        ;
+
+    // 监听端口
+    let listener = tokio::net::TcpListener::bind("localhost:8000").await.unwrap();
+    // 运行项目
+    axum::serve::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
+}
+```
+* `append_index_html_on_directories(true)` 可选的，表示如果未指定具体文件时，尝试访问目录下的 `index.html` 文件。常用于网页入口。
+
+
+## 验证
+
+访问 `http://localhost:3000/static/test.css` 检查是否正确返回内容

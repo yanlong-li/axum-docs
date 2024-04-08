@@ -1,0 +1,127 @@
+---
+title: 请求（Requests）
+---
+
+支持获取 GET、POST 中的参数，如 Query Params、Body、动态路径、请求头 Headers 等。
+
+## 引入 Serde
+
+首先引入 `serde` 库，用来进行参数的序列化和反序列化。
+
+```shell
+cargo add serde -F serde/derive
+```
+
+### 定义参数结构体
+
+以下多个示例参数结构体，分别用于接收 GET、POST 请求的参数。
+
+```rust
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Test {
+    name: String,
+}
+```
+* 如何你想某个参数是可选的，可以使用 `Option<String>`，
+* 默认值、参数别名等更多参考 serde 文档。
+
+## 查询参数（Query Params）
+处理器中增加参数 `Query<T>` 参数的接受，如下
+
+
+### 接收参数
+
+```rust
+use axum::extract::Json;
+
+async fn test(Query(test): Query<Test>) -> String {
+    test.name
+}
+```
+
+### 查询字符串中的列表
+如果想接收列表，例如表单的多选值，可以通过如下方式接受：
+
+
+#### 添加 axum-extra 依赖
+```shell
+cargo add axum-extra -F query
+```
+
+#### 修改代码如下
+```rust
+use axum_extra::extract::Query;
+
+#[derive(Deserialize)]
+struct Test {
+    #[serde(rename = "list[]")]
+    list: Vec<String>,
+}
+```
+
+* 注意：`#[serde(rename = "list[]")]` 是可选的将 `list[]` 作为参数名。
+* 例如 PHP 等语言推荐列表使用 `?list[]=1&list[]=2` 方式传递，而 Java 等语言推荐使用 `?list=1&list=2` 方式传递。
+
+## Body
+
+通过 `axum::extract::Body` 接受请求体。
+
+
+### 接收 Form
+请求体类型为 `application/x-www-form-urlencoded`
+
+```rust
+use axum::extract::Form;
+
+async fn test(Form(test): Form<Test>) -> String {
+    test.name
+}
+```
+
+* 注意，如果同时存在多个参数，Body 必须为最后一个定义，因为 Body 会取得数据所有权。
+* 例如，如果同时存在 `Query` 和 `Body`，`Body` 必须为最后一个定义。
+
+### 接收 Json
+请求体类型为 `application/json`
+
+```rust
+use axum::extract::Json;
+
+async fn test(Json(test): Json<Test>) -> String {
+    test.name
+}
+```
+
+## 路径中的动态参数（Paths）
+
+支持在路径中使用动态路径参数，如下
+
+```rs
+use axum::extract::Path;
+
+Router::new().route("/:name", get(test));
+
+
+async fn test(Path(name): Path<String>) -> String {
+    name
+}
+```
+
+
+## 请求头 Headers
+
+axum v0.7.0 之前，axum 提供了 `TypedHeader` 来获取请求头，现在需要额外引入 `axum-extra` 来获取。
+
+```rust
+cargo add axum-extra -F typed-header
+```
+### 示例代码
+```rust
+use axum_extra::{headers, TypedHeader};
+
+async fn test(TypedHeader(user_agent): TypedHeader<headers::UserAgent>) -> String {
+    user_agent.to_string()
+}
+```
