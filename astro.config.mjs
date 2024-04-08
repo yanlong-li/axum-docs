@@ -12,7 +12,7 @@ export default defineConfig({
         starlight({
             title: 'Axum Docs',
             social: {
-                github: 'https://github.com/withastro/starlight',
+                github: 'https://github.com/yanlong-li/axum-docs',
             },
             sidebar: [
                 {
