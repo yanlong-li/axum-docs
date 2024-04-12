@@ -40,7 +40,7 @@ use axum::routing::get;
 #[tokio::main]
 async fn main() {
     // 构建项目处理器
-    let app = Router::new().route("/", get(|_| async { "Hello, World!" }));
+    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
 
     // 监听端口
     let listener = tokio::net::TcpListener::bind("localhost:3000").await.unwrap();
